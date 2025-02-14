@@ -19,6 +19,7 @@ import {
 import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness'
 import '../../../style.css'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { toggleFullScreen } from '../../../Helpers/fullscreen'
 
   
   const CANVAS_ID = 'scene'
@@ -137,7 +138,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
         cursor.y = -(event.clientY / window.innerHeight - 0.5) ;
       })
 
-
+        // Full screen
+        window.addEventListener('dblclick', (event) => {
+            if (event.target === canvas) {
+              toggleFullScreen(canvas)
+            }
+          })
     }
   
     // ===== 🪄 HELPERS =====
