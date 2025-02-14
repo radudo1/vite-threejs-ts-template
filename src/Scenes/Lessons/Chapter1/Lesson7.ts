@@ -1,9 +1,7 @@
 
 import {
     AmbientLight,
-    AxesHelper,
     BoxGeometry,
-    Clock,
     GridHelper,
     LoadingManager,
     Mesh,
@@ -13,35 +11,33 @@ import {
     PerspectiveCamera,
     PlaneGeometry,
     PointLight,
-    PointLightHelper,
     Scene,
     WebGLRenderer,
   } from 'three'
-  import { DragControls } from 'three/examples/jsm/controls/DragControls'
-  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-  import Stats from 'three/examples/jsm/libs/stats.module'
-  import { toggleFullScreen } from '../helpers/fullscreen'
-  import { resizeRendererToDisplaySize } from '../helpers/responsiveness'
-  import '../style.css'
+
+
+import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness'
+import '../../../style.css'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
   
   const CANVAS_ID = 'scene'
   
-  let canvas: HTMLElement
-  let renderer: WebGLRenderer
-  let scene: Scene
-  let loadingManager: LoadingManager
-  let ambientLight: AmbientLight
-  let pointLight: PointLight
-  let cube: Mesh
-  let camera: PerspectiveCamera
+  let canvas: HTMLElement;
+  let renderer: WebGLRenderer;
+  let scene: Scene;
+  let loadingManager: LoadingManager;
+  let ambientLight: AmbientLight;
+  let pointLight: PointLight;
+  let cube: Mesh;
+  let camera: PerspectiveCamera;
   let cameraControls: OrbitControls
-  let axesHelper: AxesHelper
-  let pointLightHelper: PointLightHelper
-
+  let cursor = {
+    x: 0,
+    y: 0
+  }
   
   
-  const animation = { enabled: false, play: true }
   
   init()
   animate()
@@ -94,7 +90,8 @@ import {
     // ===== 📦 OBJECTS =====
     {
       const sideLength = 1
-      const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
+      const secondSideLength = 2
+      const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength, secondSideLength, secondSideLength, secondSideLength)
       const cubeMaterial = new MeshStandardMaterial({
         color: '#f69f1f',
         metalness: 0.5,
@@ -122,24 +119,29 @@ import {
   
     // ===== 🎥 CAMERA =====
     {
-      camera = new PerspectiveCamera(70, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
-      camera.position.set(2, 2, 2)
+      camera = new PerspectiveCamera(80, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
+      camera.position.set(0, 1, 5)
       camera.lookAt(cube.position)
+
     }
   
     // ===== 🕹️ CONTROLS =====
     {
+      cameraControls = new OrbitControls(camera, canvas);
+      cameraControls.target = cube.position.clone();
+      cameraControls.enableDamping = true;
+      cameraControls.update();
+
+      window.addEventListener('mousemove', (event: MouseEvent) => {
+        cursor.x = event.clientX / window.innerWidth - 0.5 ;
+        cursor.y = -(event.clientY / window.innerHeight - 0.5) ;
+      })
 
 
     }
   
     // ===== 🪄 HELPERS =====
     {
-      axesHelper = new AxesHelper(4)
-      axesHelper.visible = true
-      scene.add(axesHelper)
-
-
       const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
       gridHelper.position.y = -0.01
       scene.add(gridHelper)
@@ -149,15 +151,10 @@ import {
   
   function animate() {
     requestAnimationFrame(animate)
-  
-    //stats.update()
-    /* if (animation.enabled && animation.play) {
-      animations.rotate(cube, clock, Math.PI / 3)
-      animations.bounce(cube, clock, 1, 0.5, 0.5)
-    } */
-  
+
+    cameraControls.update()
+   
     if (resizeRendererToDisplaySize(renderer)) {
-      const canvas = renderer.domElement
       camera.aspect = canvas.clientWidth / canvas.clientHeight
       camera.updateProjectionMatrix()
     }
