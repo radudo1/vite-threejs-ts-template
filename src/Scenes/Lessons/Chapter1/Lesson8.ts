@@ -1,9 +1,12 @@
 import {
   AmbientLight,
   BoxGeometry,
+  BufferAttribute,
+  BufferGeometry,
   GridHelper,
   LoadingManager,
   Mesh,
+  MeshBasicMaterial,
   MeshLambertMaterial,
   MeshStandardMaterial,
   PCFSoftShadowMap,
@@ -30,6 +33,7 @@ let ambientLight: AmbientLight;
 let pointLight: PointLight;
 let cube: Mesh;
 let sphere: Mesh;
+let crazyGeometry: Mesh;
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let cursor = {
@@ -87,65 +91,35 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    const sideLength = 1;
-    const secondSideLength = 2;
-    const cubeGeometry = new BoxGeometry(
-      sideLength,
-      sideLength,
-      sideLength,
-      secondSideLength,
-      secondSideLength,
-      secondSideLength
-    );
-    const sphereGeometry = new SphereGeometry(0.5, 16, 16, 0);
-    const sphereMaterial = new MeshStandardMaterial({
-      color: 'red',
-      metalness: 0.5,
-      roughness: 0.7,
-    });
-    sphere = new Mesh(sphereGeometry, sphereMaterial);
-    sphere.castShadow = true;
-    sphere.position.x = 1;
-    sphere.position.y = 0.5;
+    // Create an empty BufferGeometry
+    const geometry = new BufferGeometry();
 
-    const cubeMaterial = new MeshStandardMaterial({
-      color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
-      wireframe: true,
-    });
-    cube = new Mesh(cubeGeometry, cubeMaterial);
-    cube.castShadow = true;
-    cube.position.y = 0.5;
+    // Create 50 triangles (450 values)
+    const count = 1000;
+    const positionsArray = new Float32Array(count * 3 * 3);
+    for (let i = 0; i < count * 3 * 3; i++) {
+      positionsArray[i] = (Math.random() - 0.5) * 4;
+    }
 
-    const planeGeometry = new PlaneGeometry(3, 3);
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
-    });
-    const plane = new Mesh(planeGeometry, planeMaterial);
-    plane.rotateX(Math.PI / 2);
-    plane.receiveShadow = true;
-
-    scene.add(cube);
-    //scene.add(sphere);
+    // Create the attribute and name it 'position'
+    const positionsAttribute = new BufferAttribute(positionsArray, 3);
+    geometry.setAttribute('position', positionsAttribute);
+    const material = new MeshBasicMaterial({ color: 'red', wireframe: true });
+    const mesh = new Mesh(geometry, material);
+    scene.add(mesh);
   }
 
   // ===== 🎥 CAMERA =====
   {
     camera = new PerspectiveCamera(80, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
     camera.position.set(0, 1, 5);
-    camera.lookAt(cube.position);
+    //camera.lookAt(cube.position);
   }
 
   // ===== 🕹️ CONTROLS =====
   {
     cameraControls = new OrbitControls(camera, canvas);
-    cameraControls.target = cube.position.clone();
+    // cameraControls.target = cube.position.clone();
     cameraControls.enableDamping = true;
     cameraControls.autoRotate = true;
     cameraControls.update();
