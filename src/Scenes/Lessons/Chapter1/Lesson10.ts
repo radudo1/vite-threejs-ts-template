@@ -13,6 +13,9 @@ import {
   PointLight,
   Scene,
   SphereGeometry,
+  Texture,
+  TextureLoader,
+  TorusGeometry,
   WebGLRenderer,
 } from 'three';
 import gsap from 'gsap';
@@ -32,18 +35,25 @@ let loadingManager: LoadingManager;
 let ambientLight: AmbientLight;
 let pointLight: PointLight;
 let cube: Mesh;
+let ambientOcclusionTexture: Texture;
+let colorTexture: Texture;
+let alphaTexture: Texture;
+let heightTexture: Texture;
+let normalTexture: Texture;
+let metalnessTexture: Texture;
+let roughnessTexture: Texture;
 let sphere: Mesh;
 let clock: Clock;
+let textureLoader: TextureLoader;
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let cursor = {
   x: 0,
   y: 0,
 };
-
+const loadingManagerEnabled = false;
 init();
 animate();
-
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
@@ -58,22 +68,36 @@ function init() {
   // ===== 👨🏻‍💼 LOADING MANAGER =====
   {
     loadingManager = new LoadingManager();
+    textureLoader = new TextureLoader();
 
-    loadingManager.onStart = () => {
-      console.log('loading started');
-    };
-    loadingManager.onProgress = (url, loaded, total) => {
-      console.log('loading in progress:');
-      console.log(`${url} -> ${loaded} / ${total}`);
-    };
-    loadingManager.onLoad = () => {
-      console.log('loaded!');
-    };
-    loadingManager.onError = () => {
-      console.log('❌ error while loading');
-    };
+    textureLoader.manager = loadingManager;
+    if (loadingManagerEnabled) {
+      loadingManager.onStart = () => {
+        console.log('loading started');
+      };
+      loadingManager.onProgress = (url, loaded, total) => {
+        console.log('loading in progress:');
+        console.log(`${url} -> ${loaded} / ${total}`);
+      };
+      loadingManager.onLoad = () => {
+        console.log('loaded!');
+      };
+      loadingManager.onError = (error) => {
+        console.log('❌ error while loading: ', error);
+      };
+    }
   }
 
+  // ===== 🧬TEXTURES =====
+  {
+    colorTexture = textureLoader.load('/textures/door/color.jpg');
+    alphaTexture = textureLoader.load('/textures/door/alpha.jpg');
+    heightTexture = textureLoader.load('/textures/door/height.jpg');
+    normalTexture = textureLoader.load('/textures/door/normal.jpg');
+    metalnessTexture = textureLoader.load('/textures/door/metalness.jpg');
+    roughnessTexture = textureLoader.load('/textures/door/roughness.jpg');
+    ambientOcclusionTexture = textureLoader.load('/textures/door/ambientOcclusion.jpg');
+  }
   // ===== 💡 LIGHTS =====
   {
     ambientLight = new AmbientLight('white', 0.4);
@@ -92,7 +116,7 @@ function init() {
   // ===== 📦 OBJECTS =====
   {
     const sideLength = 1;
-    const secondSideLength = 2;
+    const secondSideLength = 1;
     const cubeGeometry = new BoxGeometry(
       sideLength,
       sideLength,
@@ -101,6 +125,7 @@ function init() {
       secondSideLength,
       secondSideLength
     );
+
     const sphereGeometry = new SphereGeometry(0.5, 16, 16, 0);
     const sphereMaterial = new MeshStandardMaterial({
       color: 'red',
@@ -113,9 +138,8 @@ function init() {
     sphere.position.y = 0.5;
 
     const cubeMaterial = new MeshStandardMaterial({
+      map: colorTexture,
       color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
     });
     cube = new Mesh(cubeGeometry, cubeMaterial);
     cube.castShadow = true;
@@ -150,7 +174,7 @@ function init() {
     cameraControls = new OrbitControls(camera, canvas);
     cameraControls.target = cube.position.clone();
     cameraControls.enableDamping = true;
-    cameraControls.autoRotate = true;
+    cameraControls.autoRotate = false;
     cameraControls.update();
 
     window.addEventListener('mousemove', (event: MouseEvent) => {
@@ -165,9 +189,7 @@ function init() {
       }
     });
   }
-  const handleAutoRotate = (isFinished: boolean) => {
-    cameraControls.autoRotate = isFinished;
-  };
+
   // ===== 🪄 HELPERS =====
   {
     interface IDebugObject {
@@ -193,22 +215,8 @@ function init() {
 
     const gui = new GUI({ title: '🐞 Debug GUI', width: 300 });
     const cubeOneFolder = gui.addFolder('Cube Folder');
-    cubeOneFolder
-      .add(cube.position, 'x')
-      .min(-5)
-      .max(5)
-      .step(0.5)
-      .name('pos x')
-      .onChange(() => handleAutoRotate(false))
-      .onFinishChange(() => handleAutoRotate(true));
-    cubeOneFolder
-      .add(cube.position, 'z')
-      .min(-5)
-      .max(5)
-      .step(0.5)
-      .name('pos z')
-      .onChange(() => handleAutoRotate(false))
-      .onFinishChange(() => handleAutoRotate(true));
+    cubeOneFolder.add(cube.position, 'x').min(-5).max(5).step(0.5).name('pos x');
+    cubeOneFolder.add(cube.position, 'z').min(-5).max(5).step(0.5).name('pos z');
     cubeOneFolder.add(cube.material, 'wireframe');
     cubeOneFolder
       .add(controls, 'enableRotation')
@@ -220,38 +228,17 @@ function init() {
     cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.001);
     cubeOneFolder.add(cube.material, 'roughness', 0, 1);
 
-    cubeOneFolder
-      .add(cube.scale, 'x')
-      .min(0.1)
-      .max(2)
-      .step(0.01)
-      .name('scale x')
-      .onChange(() => handleAutoRotate(false))
-      .onFinishChange(() => handleAutoRotate(true));
-    cubeOneFolder
-      .add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate x')
-      .onChange(() => handleAutoRotate(false))
-      .onFinishChange(() => handleAutoRotate(true));
-    cubeOneFolder
-      .add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate y')
-      .onChange(() => handleAutoRotate(false))
-      .onFinishChange(() => handleAutoRotate(true));
-    cubeOneFolder
-      .add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate z')
-      .onChange(() => handleAutoRotate(false))
-      .onFinishChange(() => handleAutoRotate(true));
+    cubeOneFolder.add(cube.scale, 'x').min(0.1).max(2).step(0.01).name('scale x');
+    cubeOneFolder.add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate x');
+    cubeOneFolder.add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate y');
+    cubeOneFolder.add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4).name('rotate z');
     cubeOneFolder
       .add(debugObject, 'subdivision')
       .min(1)
       .max(20)
       .step(1)
-      .onChange(() => handleAutoRotate(false))
 
       .onFinishChange(() => {
-        handleAutoRotate(true);
         cube.geometry = new BoxGeometry(
           debugObject.width,
           debugObject.height,
