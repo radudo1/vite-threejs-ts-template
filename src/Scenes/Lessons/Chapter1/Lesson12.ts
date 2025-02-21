@@ -18,6 +18,8 @@ import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness';
 import '../../../style.css';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { createLoadingManager } from '../../../Helpers/createLoadingManager';
+import { initializeScene } from '../../../Helpers/initializeScene';
 
 const CANVAS_ID = 'scene';
 
@@ -35,38 +37,29 @@ let cursor = {
   x: 0,
   y: 0,
 };
-
+const controls: { loadingManagerEnabled: boolean } = {
+  loadingManagerEnabled: false,
+};
 init();
 animate();
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
-    canvas = document.querySelector(`canvas#${CANVAS_ID}`)!;
-    renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = PCFSoftShadowMap;
-    scene = new Scene();
+    const sceneSetup = initializeScene(CANVAS_ID);
+    canvas = sceneSetup.canvas;
+    renderer = sceneSetup.renderer;
+    scene = sceneSetup.scene;
   }
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
   {
-    loadingManager = new LoadingManager();
-
-    loadingManager.onStart = () => {
-      console.log('loading started');
-    };
-    loadingManager.onProgress = (url, loaded, total) => {
-      console.log('loading in progress:');
-      console.log(`${url} -> ${loaded} / ${total}`);
-    };
-    loadingManager.onLoad = () => {
-      console.log('loaded!');
-    };
-    loadingManager.onError = () => {
-      console.log('❌ error while loading');
-    };
+    loadingManager = createLoadingManager(controls);
+  }
+  // ===== 📜 FONTS =====
+  {
+    fontLoader = new FontLoader(loadingManager);
+    fontLoader.load('fonts/helvetiker_regular.typeface.json', (font) => {});
   }
 
   // ===== 💡 LIGHTS =====
