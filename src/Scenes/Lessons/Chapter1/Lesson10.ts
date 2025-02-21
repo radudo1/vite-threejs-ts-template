@@ -7,16 +7,22 @@ import {
   Mesh,
   MeshLambertMaterial,
   MeshStandardMaterial,
+  MirroredRepeatWrapping,
+  NearestFilter,
+  MagnificationTextureFilter,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
   PointLight,
+  RepeatWrapping,
   Scene,
   SphereGeometry,
   Texture,
   TextureLoader,
   TorusGeometry,
   WebGLRenderer,
+  NearestMipMapNearestFilter,
+  LinearFilter,
 } from 'three';
 import gsap from 'gsap';
 
@@ -25,6 +31,7 @@ import '../../../style.css';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { toggleFullScreen } from '../../../Helpers/fullscreen';
 import GUI from 'lil-gui';
+import rotationsAngles from '../../../Helpers/rotationAngles';
 
 const CANVAS_ID = 'scene';
 
@@ -35,23 +42,21 @@ let loadingManager: LoadingManager;
 let ambientLight: AmbientLight;
 let pointLight: PointLight;
 let cube: Mesh;
-let ambientOcclusionTexture: Texture;
 let colorTexture: Texture;
-let alphaTexture: Texture;
-let heightTexture: Texture;
-let normalTexture: Texture;
-let metalnessTexture: Texture;
-let roughnessTexture: Texture;
 let sphere: Mesh;
-let clock: Clock;
 let textureLoader: TextureLoader;
+let checkboardTexture: Texture;
+let minecraftTexture: Texture;
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let cursor = {
   x: 0,
   y: 0,
 };
-const loadingManagerEnabled = false;
+
+const controls: { loadingManagerEnabled: boolean } = {
+  loadingManagerEnabled: false,
+};
 init();
 animate();
 function init() {
@@ -71,7 +76,7 @@ function init() {
     textureLoader = new TextureLoader();
 
     textureLoader.manager = loadingManager;
-    if (loadingManagerEnabled) {
+    if (controls.loadingManagerEnabled) {
       loadingManager.onStart = () => {
         console.log('loading started');
       };
@@ -91,12 +96,27 @@ function init() {
   // ===== 🧬TEXTURES =====
   {
     colorTexture = textureLoader.load('/textures/door/color.jpg');
-    alphaTexture = textureLoader.load('/textures/door/alpha.jpg');
-    heightTexture = textureLoader.load('/textures/door/height.jpg');
-    normalTexture = textureLoader.load('/textures/door/normal.jpg');
-    metalnessTexture = textureLoader.load('/textures/door/metalness.jpg');
-    roughnessTexture = textureLoader.load('/textures/door/roughness.jpg');
-    ambientOcclusionTexture = textureLoader.load('/textures/door/ambientOcclusion.jpg');
+    checkboardTexture = textureLoader.load('/textures/checkerboard-8x8.png');
+    minecraftTexture = textureLoader.load('/textures/minecraft.png');
+    /* 
+    colorTexture.repeat.x = 2;
+    colorTexture.repeat.y = 3;
+
+    colorTexture.wrapS = MirroredRepeatWrapping;
+    colorTexture.wrapT = MirroredRepeatWrapping;
+
+    colorTexture.offset.x = 0.5;
+    colorTexture.offset.y = 0.5;
+
+    colorTexture.rotation = rotationsAngles['45'];
+    colorTexture.center.x = 0.5;
+    colorTexture.center.y = 0.5; 
+    */
+
+    // checkboardTexture.magFilter = NearestFilter;
+    minecraftTexture.generateMipmaps = false;
+    minecraftTexture.minFilter = NearestFilter;
+    minecraftTexture.magFilter = NearestFilter;
   }
   // ===== 💡 LIGHTS =====
   {
@@ -138,7 +158,7 @@ function init() {
     sphere.position.y = 0.5;
 
     const cubeMaterial = new MeshStandardMaterial({
-      map: colorTexture,
+      map: minecraftTexture,
       color: '#f69f1f',
     });
     cube = new Mesh(cubeGeometry, cubeMaterial);
@@ -276,7 +296,6 @@ function init() {
 
   // ===== 📈 STATS & CLOCK =====
   {
-    clock = new Clock();
   }
 }
 
