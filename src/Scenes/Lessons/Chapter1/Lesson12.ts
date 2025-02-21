@@ -1,11 +1,15 @@
 import {
   AmbientLight,
   BoxGeometry,
+  Clock,
   GridHelper,
+  Group,
   LoadingManager,
   Mesh,
+  MeshBasicMaterial,
   MeshLambertMaterial,
   MeshStandardMaterial,
+  MeshToonMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
@@ -20,6 +24,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { createLoadingManager } from '../../../Helpers/createLoadingManager';
 import { initializeScene } from '../../../Helpers/initializeScene';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
+import { bounce, rotate } from '../../../Helpers/animations';
 
 const CANVAS_ID = 'scene';
 
@@ -33,6 +39,10 @@ let cube: Mesh;
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let fontLoader: FontLoader;
+let textGeometry: TextGeometry;
+let textGroup: Group;
+let clock: Clock;
+
 let cursor = {
   x: 0,
   y: 0,
@@ -56,12 +66,37 @@ function init() {
   {
     loadingManager = createLoadingManager(controls);
   }
+
   // ===== 📜 FONTS =====
   {
     fontLoader = new FontLoader(loadingManager);
-    fontLoader.load('fonts/helvetiker_regular.typeface.json', (font) => {});
-  }
+    fontLoader.load('fonts/helvetiker_regular.typeface.json', (font) => {
+      textGroup = new Group();
+      const text = 'Radu vs Three.JS';
+      const material = new MeshToonMaterial({ color: 'orange' });
 
+      text.split('').forEach((char, index) => {
+        const charGeometry = new TextGeometry(char, {
+          font: font,
+          size: 0.5,
+          depth: 0.2,
+          curveSegments: 12,
+          bevelEnabled: true,
+          bevelThickness: 0.03,
+          bevelSize: 0.02,
+          bevelOffset: 0,
+          bevelSegments: 5,
+        });
+
+        const charMesh = new Mesh(charGeometry, material);
+        charMesh.position.x = index * 0.5; // Adjust spacing between characters
+        textGroup.add(charMesh);
+      });
+
+      textGroup.position.set(-4, 1, 0); // Adjust the position of the entire text group
+      scene.add(textGroup);
+    });
+  }
   // ===== 💡 LIGHTS =====
   {
     ambientLight = new AmbientLight('white', 0.4);
@@ -110,7 +145,6 @@ function init() {
     const plane = new Mesh(planeGeometry, planeMaterial);
     plane.rotateX(Math.PI / 2);
     plane.receiveShadow = true;
-
     scene.add(cube);
   }
 
@@ -139,11 +173,17 @@ function init() {
     const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
     gridHelper.position.y = -0.01;
     scene.add(gridHelper);
+    clock = new Clock();
   }
 }
 
 function animate() {
   requestAnimationFrame(animate);
+  textGroup.children.forEach((charMesh, index) => {
+    const delay = index * 0.1; // 0.5 second delay between each letter
+    bounce(charMesh, clock, 1.5, 0.4, 0.3, delay);
+    rotate(charMesh, clock, Math.PI / 4);
+  });
 
   cameraControls.update();
 
