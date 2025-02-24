@@ -1,23 +1,26 @@
-import { Clock, Object3D } from 'three';
+import { Clock, Object3D, Vector3 } from 'three';
 
-function rotate(object: Object3D, clock: Clock, radiansPerSecond: number = Math.PI * 2) {
-  const rotationAngle = Math.abs(Math.cos(clock.getElapsedTime() / 2) * radiansPerSecond);
-  object.rotation.y = rotationAngle;
+function rotate(object: Object3D, clock: Clock, radiansPerSecond: number = Math.PI * 2, delay: number = 0) {
+  const elapsedTime = clock.getElapsedTime() + delay;
+  const initialPosition = object.userData.initialPosition as Vector3;
+  object.rotation.x = Math.cos(elapsedTime * radiansPerSecond);
+  object.rotation.y = Math.cos(elapsedTime * radiansPerSecond);
+  object.position.x = initialPosition.x;
+  object.position.z = initialPosition.z;
+  object.position.y = Math.sin(delay) * Math.cos(delay * 2) * Math.sin(delay * 4) * 0.01;
 }
 
 function bounce(
   object: Object3D,
   clock: Clock,
-  bounceSpeed: number = 1.5,
-  amplitude: number = 0.4,
-  yLowerBound: number = 0.5,
+  amplitude: number,
+  frequency: number,
+  phase: number,
   delay: number = 0
 ) {
-  const elapsed = clock.getElapsedTime() - delay;
-  if (elapsed > 0) {
-    const yPos = Math.abs(Math.sin(elapsed * bounceSpeed) * amplitude);
-    object.position.y = yPos + yLowerBound;
-  }
+  const elapsedTime = clock.getElapsedTime();
+  const initialPosition = object.userData.initialPosition as Vector3;
+  object.position.y = initialPosition.y + Math.sin(elapsedTime * frequency + phase + delay) * amplitude;
 }
 
 export { rotate, bounce };

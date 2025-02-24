@@ -8,6 +8,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshLambertMaterial,
+  MeshMatcapMaterial,
   MeshStandardMaterial,
   MeshToonMaterial,
   PCFSoftShadowMap,
@@ -15,9 +16,14 @@ import {
   PlaneGeometry,
   PointLight,
   Scene,
+  SRGBColorSpace,
+  Texture,
+  TextureLoader,
+  TorusGeometry,
   WebGLRenderer,
 } from 'three';
-
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import Stats from 'three/examples/jsm/libs/stats.module';
 import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness';
 import '../../../style.css';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -35,13 +41,19 @@ let scene: Scene;
 let loadingManager: LoadingManager;
 let ambientLight: AmbientLight;
 let pointLight: PointLight;
-let cube: Mesh;
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let fontLoader: FontLoader;
 let textGeometry: TextGeometry;
+let text: Mesh;
+let textMaterial: MeshMatcapMaterial;
+let donutGroup: Group;
+let textureLoader: TextureLoader;
+let matCapTexture: Texture;
+let stats: Stats;
 let textGroup: Group;
 let clock: Clock;
+let sonicModel: Group;
 
 let cursor = {
   x: 0,
@@ -65,36 +77,76 @@ function init() {
   // ===== 👨🏻‍💼 LOADING MANAGER =====
   {
     loadingManager = createLoadingManager(controls);
+    matCapTexture = new TextureLoader(loadingManager).load('textures/matcaps/3.png');
+    matCapTexture.colorSpace = SRGBColorSpace;
   }
 
   // ===== 📜 FONTS =====
   {
     fontLoader = new FontLoader(loadingManager);
+    // fontLoader.load('fonts/helvetiker_regular.typeface.json', (font) => {
+    //   textGroup = new Group();
+    //   const text = 'Hello';
+    //   const material = new MeshToonMaterial({ color: 'orange' });
+
+    //   text.split('').forEach((char, index) => {
+    //     const charGeometry = new TextGeometry(char, {
+    //       font: font,
+    //       size: 0.5,
+    //       depth: 0.2,
+    //       curveSegments: 12,
+    //       bevelEnabled: true,
+    //       bevelThickness: 0.03,
+    //       bevelSize: 0.02,
+    //       bevelOffset: 0,
+    //       bevelSegments: 5,
+    //     });
+
+    //     const charMesh = new Mesh(charGeometry, material);
+    //     charMesh.position.x = index * 0.5; // Adjust spacing between characters
+    //     textGroup.add(charMesh);
+    //   });
+
+    //   textGroup.position.set(0, 1, 0); // Adjust the position of the entire text group
     fontLoader.load('fonts/helvetiker_regular.typeface.json', (font) => {
-      textGroup = new Group();
-      const text = 'Radu vs Three.JS';
-      const material = new MeshToonMaterial({ color: 'orange' });
-
-      text.split('').forEach((char, index) => {
-        const charGeometry = new TextGeometry(char, {
-          font: font,
-          size: 0.5,
-          depth: 0.2,
-          curveSegments: 12,
-          bevelEnabled: true,
-          bevelThickness: 0.03,
-          bevelSize: 0.02,
-          bevelOffset: 0,
-          bevelSegments: 5,
-        });
-
-        const charMesh = new Mesh(charGeometry, material);
-        charMesh.position.x = index * 0.5; // Adjust spacing between characters
-        textGroup.add(charMesh);
+      donutGroup = new Group();
+      textGeometry = new TextGeometry('Sonic', {
+        font: font,
+        size: 3,
+        depth: 0.1,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelOffset: 0,
+        bevelSegments: 5,
       });
+      textGeometry.computeBoundingBox();
+      textGeometry.center();
 
-      textGroup.position.set(-4, 1, 0); // Adjust the position of the entire text group
-      scene.add(textGroup);
+      textMaterial = new MeshMatcapMaterial({ color: '#001E76' });
+
+      textMaterial.matcap = matCapTexture;
+      textMaterial.shadowSide = 2;
+      textMaterial.flatShading = true;
+
+      text = new Mesh(textGeometry, textMaterial);
+      camera.lookAt(text.position);
+      scene.add(text);
+
+      for (let i = 0; i < 20; i++) {
+        const donutGeometry = new TorusGeometry(0.5, 0.1, 16, 100);
+        const donutMaterial = new MeshMatcapMaterial({ color: 'orange', matcap: matCapTexture });
+        donutMaterial.opacity = 0.9;
+
+        donutMaterial.transparent = true;
+        const donut = new Mesh(donutGeometry, donutMaterial);
+
+        donut.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+        donut.userData.initialPosition = donut.position.clone();
+        donutGroup.add(donut);
+      }
+      scene.add(donutGroup);
     });
   }
   // ===== 💡 LIGHTS =====
@@ -114,52 +166,37 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    const sideLength = 1;
-    const secondSideLength = 2;
-    const cubeGeometry = new BoxGeometry(
-      sideLength,
-      sideLength,
-      sideLength,
-      secondSideLength,
-      secondSideLength,
-      secondSideLength
-    );
-    const cubeMaterial = new MeshStandardMaterial({
-      color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
-    });
-    cube = new Mesh(cubeGeometry, cubeMaterial);
-    cube.castShadow = true;
-    cube.position.y = 0.5;
+    const gltfLoader = new GLTFLoader(loadingManager);
+    gltfLoader.load('./models/duck_gltf/rubber_duck_toy_1k.gltf', (gltf) => {
+      sonicModel = gltf.scene;
+      sonicModel.position.setX(0);
+      sonicModel.position.setY(3);
+      sonicModel.position.setZ(20);
+      sonicModel.scale.set(10, 10, 10);
+      sonicModel.animations = gltf.animations;
 
-    const planeGeometry = new PlaneGeometry(3, 3);
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
+      sonicModel.traverse((child) => {
+        if (child instanceof Mesh) {
+          child.castShadow = true;
+          child.material = new MeshMatcapMaterial({ matcap: matCapTexture });
+        }
+      });
+      sonicModel.castShadow = true;
+      scene.add(sonicModel);
     });
-    const plane = new Mesh(planeGeometry, planeMaterial);
-    plane.rotateX(Math.PI / 2);
-    plane.receiveShadow = true;
-    scene.add(cube);
   }
 
   // ===== 🎥 CAMERA =====
   {
     camera = new PerspectiveCamera(80, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.set(0, 1, 5);
-    camera.lookAt(cube.position);
+    camera.position.set(0, 1, 10);
   }
 
   // ===== 🕹️ CONTROLS =====
   {
     cameraControls = new OrbitControls(camera, canvas);
-    cameraControls.target = cube.position.clone();
     cameraControls.enableDamping = true;
+    cameraControls.maxPolarAngle = Math.PI / 2;
     cameraControls.update();
 
     window.addEventListener('mousemove', (event: MouseEvent) => {
@@ -170,27 +207,53 @@ function init() {
 
   // ===== 🪄 HELPERS =====
   {
-    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
-    gridHelper.position.y = -0.01;
-    scene.add(gridHelper);
+    stats = new Stats();
+    document.body.appendChild(stats.dom);
     clock = new Clock();
   }
 }
 
 function animate() {
   requestAnimationFrame(animate);
-  textGroup.children.forEach((charMesh, index) => {
-    const delay = index * 0.1; // 0.5 second delay between each letter
-    bounce(charMesh, clock, 1.5, 0.4, 0.3, delay);
-    rotate(charMesh, clock, Math.PI / 4);
-  });
+  //   textGroup.children.forEach((charMesh, index) => {
+  //     const delay = index * 0.1; // 0.5 second delay between each letter
+  //     bounce(charMesh, clock, 1.5, 0.4, 0.3, delay);
+  //     rotate(charMesh, clock, Math.PI / 4);
+  //   });
 
   cameraControls.update();
+  stats.update();
+  if (donutGroup) {
+    donutGroup.children.forEach((donut, index) => {
+      const delay = index * 0.5;
+      rotate(donut, clock, Math.PI / 4, delay);
+      bounce(donut, clock, 1.5, 0.4, 0.3, delay);
+    });
+  }
 
+  if (sonicModel) {
+    moveDuck(sonicModel, clock);
+  }
   if (resizeRendererToDisplaySize(renderer)) {
     camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
   }
 
   renderer.render(scene, camera);
+}
+function moveDuck(duck: Group, clock: Clock) {
+  const elapsedTime = clock.getElapsedTime();
+  const speed = 0.5;
+  const distance = Math.sin(elapsedTime) * speed;
+
+  // Move the duck forward and backward
+  duck.position.x = distance;
+  duck.position.z = Math.cos(elapsedTime) * speed;
+
+  // Rotate the duck to face the direction of movement
+  if (distance >= 0) {
+    duck.rotation.y = Math.atan2(Math.cos(elapsedTime), Math.sin(elapsedTime));
+  } else {
+    duck.rotation.y = Math.atan2(-Math.cos(elapsedTime), -Math.sin(elapsedTime));
+  }
 }
