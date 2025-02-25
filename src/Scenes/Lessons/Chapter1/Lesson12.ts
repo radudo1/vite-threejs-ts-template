@@ -1,19 +1,11 @@
 import {
   AmbientLight,
-  BoxGeometry,
   Clock,
-  GridHelper,
   Group,
   LoadingManager,
   Mesh,
-  MeshBasicMaterial,
-  MeshLambertMaterial,
   MeshMatcapMaterial,
-  MeshStandardMaterial,
-  MeshToonMaterial,
-  PCFSoftShadowMap,
   PerspectiveCamera,
-  PlaneGeometry,
   PointLight,
   Scene,
   SRGBColorSpace,
@@ -22,16 +14,16 @@ import {
   TorusGeometry,
   WebGLRenderer,
 } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import Stats from 'three/examples/jsm/libs/stats.module';
-import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness';
-import '../../../style.css';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
+import Stats from 'three/examples/jsm/libs/stats.module';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { bounce, rotate } from '../../../Helpers/animations';
 import { createLoadingManager } from '../../../Helpers/createLoadingManager';
 import { initializeScene } from '../../../Helpers/initializeScene';
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
-import { bounce, rotate } from '../../../Helpers/animations';
+import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness';
+import '../../../style.css';
 
 const CANVAS_ID = 'scene';
 
