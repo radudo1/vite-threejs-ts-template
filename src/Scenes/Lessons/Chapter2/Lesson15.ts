@@ -24,6 +24,7 @@ import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness';
 import '../../../style.css';
 import { initializeScene } from '../../../Helpers/initializeScene';
 import { optimizeLightShadow } from '../../../Helpers/shadows';
+import { createLoadingManager } from '../../../Helpers/createLoadingManager';
 
 const CANVAS_ID = 'scene';
 
@@ -67,25 +68,10 @@ function init() {
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
   {
-    loadingManager = new LoadingManager();
+    loadingManager = createLoadingManager(controls);
     textureLoader = new TextureLoader();
 
     textureLoader.manager = loadingManager;
-    if (controls.loadingManagerEnabled) {
-      loadingManager.onStart = () => {
-        console.log('loading started');
-      };
-      loadingManager.onProgress = (url, loaded, total) => {
-        console.log('loading in progress:');
-        console.log(`${url} -> ${loaded} / ${total}`);
-      };
-      loadingManager.onLoad = () => {
-        console.log('loaded!');
-      };
-      loadingManager.onError = (error) => {
-        console.log('❌ error while loading: ', error);
-      };
-    }
   }
 
   // ===== 🧬TEXTURES =====

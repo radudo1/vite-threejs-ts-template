@@ -21,6 +21,7 @@ import '../../../style.css';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { toggleFullScreen } from '../../../Helpers/fullscreen';
 import GUI from 'lil-gui';
+import { createLoadingManager } from '../../../Helpers/createLoadingManager';
 
 const CANVAS_ID = 'scene';
 
@@ -41,7 +42,9 @@ let cursor = {
 
 init();
 animate();
-
+const controls: { loadingManagerEnabled: boolean } = {
+  loadingManagerEnabled: false,
+};
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
@@ -55,21 +58,7 @@ function init() {
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
   {
-    loadingManager = new LoadingManager();
-
-    loadingManager.onStart = () => {
-      console.log('loading started');
-    };
-    loadingManager.onProgress = (url, loaded, total) => {
-      console.log('loading in progress:');
-      console.log(`${url} -> ${loaded} / ${total}`);
-    };
-    loadingManager.onLoad = () => {
-      console.log('loaded!');
-    };
-    loadingManager.onError = () => {
-      console.log('❌ error while loading');
-    };
+    loadingManager = createLoadingManager(controls);
   }
 
   // ===== 💡 LIGHTS =====

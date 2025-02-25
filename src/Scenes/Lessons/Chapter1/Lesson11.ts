@@ -46,6 +46,7 @@ import rotationsAngles from '../../../Helpers/rotationAngles';
 import colorHelper from '../../../Helpers/colorHelper';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import { createLoadingManager } from '../../../Helpers/createLoadingManager';
 
 const CANVAS_ID = 'scene';
 
@@ -98,25 +99,10 @@ function init() {
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
   {
-    loadingManager = new LoadingManager();
+    loadingManager = createLoadingManager(controls);
     textureLoader = new TextureLoader();
 
     textureLoader.manager = loadingManager;
-    if (controls.loadingManagerEnabled) {
-      loadingManager.onStart = () => {
-        console.log('loading started');
-      };
-      loadingManager.onProgress = (url, loaded, total) => {
-        console.log('loading in progress:');
-        console.log(`${url} -> ${loaded} / ${total}`);
-      };
-      loadingManager.onLoad = () => {
-        console.log('loaded!');
-      };
-      loadingManager.onError = (error) => {
-        console.log('❌ error while loading: ', error);
-      };
-    }
   }
 
   // ===== 🧬TEXTURES =====
