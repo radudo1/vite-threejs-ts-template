@@ -42,16 +42,13 @@ let ambientLight: AmbientLight;
 let gui: GUI;
 let textureLoader: TextureLoader;
 let directionalLight: DirectionalLight;
-let spotLight: SpotLight;
+
 let camera: PerspectiveCamera;
 let cameraControls: OrbitControls;
 let clock: Clock;
-let sphereShadow: Mesh;
+
 let material: MeshStandardMaterial;
-let simpleShadow: Texture;
-let bakedShadow: Texture;
-let sphere: Mesh;
-let plane: Mesh;
+let house: Mesh;
 let cursor = {
   x: 0,
   y: 0,
@@ -85,62 +82,14 @@ function init() {
 
   // ===== 🧬TEXTURES =====
   {
-    bakedShadow = textureLoader.load('/textures/bakedShadow.jpg');
-    bakedShadow.colorSpace = SRGBColorSpace;
-    simpleShadow = textureLoader.load('/textures/simpleShadow.jpg');
-    simpleShadow.colorSpace = SRGBColorSpace;
   }
   // ===== 💡 LIGHTS =====
   {
-    ambientLight = new AmbientLight('white', 1);
+    ambientLight = new AmbientLight('#ffffff', 0.5);
+    directionalLight = new DirectionalLight('#ffffff', 1.5);
+    directionalLight.position.set(3, 2, -8);
 
-    directionalLight = new DirectionalLight('white', 1.5);
-    directionalLight.position.set(2, 2, -1);
-    directionalLight.castShadow = true;
-
-    //Improves shadow quality multiply by 2
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
-
-    //Improves shadow quality
-    directionalLight.shadow.camera.far = 10;
-    directionalLight.shadow.camera.near = 1;
-
-    //Optimize the render area and shadow quality
-    directionalLight.shadow.camera.top = 2;
-    directionalLight.shadow.camera.right = 2;
-    directionalLight.shadow.camera.bottom = -2;
-    directionalLight.shadow.camera.left = -2;
-
-    //Blur
-    directionalLight.shadow.radius = 10;
-
-    // Spot light
-    const spotLight = new SpotLight(0xffffff, 3.6, 10, Math.PI * 0.3);
-    spotLight.castShadow = true;
-    spotLight.position.set(0, 2, 2);
-    optimizeLightShadow(spotLight, 'high');
-    spotLight.shadow.camera.near = 1;
-    spotLight.shadow.camera.far = 6;
-    scene.add(spotLight);
-    scene.add(spotLight.target);
-
-    const spotLightCameraHelper = new CameraHelper(spotLight.shadow.camera);
-    spotLightCameraHelper.visible = false;
-    scene.add(spotLightCameraHelper);
     scene.add(ambientLight, directionalLight);
-
-    //Point light
-    const pointLight = new PointLight(0xffffff, 3.6);
-    pointLight.castShadow = true;
-    pointLight.position.set(-1, 1, 0);
-    optimizeLightShadow(pointLight, 'high');
-    pointLight.shadow.camera.near = 0.1;
-    pointLight.shadow.camera.far = 6;
-    const pointLightCameraHelper = new CameraHelper(pointLight.shadow.camera);
-    pointLightCameraHelper.visible = false;
-
-    scene.add(pointLight, pointLightCameraHelper);
   }
 
   // ===== 🎨 MATERIALS =====
@@ -150,29 +99,19 @@ function init() {
   }
   // ===== 📦 OBJECTS =====
   {
-    sphere = new Mesh(new SphereGeometry(0.5, 32, 32), material);
-    plane = new Mesh(new PlaneGeometry(5, 5), material);
-    sphereShadow = new Mesh(
-      new PlaneGeometry(1.5, 1.5),
-      new MeshBasicMaterial({ alphaMap: simpleShadow, color: 'black', transparent: true })
-    );
-
-    sphere.castShadow = true;
-    plane.receiveShadow = true;
-
-    plane.rotation.x = -Math.PI * 0.5;
-    plane.position.y = -0.5;
-
-    sphereShadow.rotation.x = -rotationsAngles[90];
-    sphereShadow.position.y = plane.position.y + 0.01;
-
-    scene.add(sphere, plane, sphereShadow);
+    // ===== 🌐 House =====
+    {
+      house = new Mesh(new SphereGeometry(1, 32, 32), new MeshStandardMaterial({ roughness: 0.7 }));
+      scene.add(house);
+    }
   }
 
   // ===== 🎥 CAMERA =====
   {
+    // Base Camera
     camera = new PerspectiveCamera(80, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.set(0, 1, 5);
+    camera.position.set(4, 2, 5);
+    scene.add(camera);
   }
 
   // ===== 🕹️ CONTROLS =====
@@ -238,15 +177,6 @@ function animate() {
   requestAnimationFrame(animate);
   const elapsedTime = clock.getElapsedTime();
   cameraControls.update();
-
-  //Animate Shpere
-  sphere.position.x = Math.cos(elapsedTime) * 1.5;
-  sphere.position.z = Math.sin(elapsedTime) * 1.5;
-  sphere.position.y = Math.abs(Math.sin(elapsedTime * 5)) * 0.5;
-
-  sphereShadow.position.x = sphere.position.x;
-  sphereShadow.position.z = sphere.position.z;
-  (sphereShadow.material as MeshBasicMaterial).opacity = (1 - sphere.position.y) * 0.5;
 
   if (resizeRendererToDisplaySize(renderer)) {
     camera.aspect = canvas.clientWidth / canvas.clientHeight;

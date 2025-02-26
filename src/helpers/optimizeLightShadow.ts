@@ -1,6 +1,6 @@
-import { Light, OrthographicCamera } from 'three';
+import { Light } from 'three';
 
-export function optimizeLightShadow(light: Light, quality: 'high' | 'medium' | 'low') {
+export function optimizeLightShadow(light: Light, quality: 'high' | 'medium' | 'low'): void {
   if (!light.castShadow) {
     console.warn('The provided light does not cast shadows.');
     return;
@@ -29,14 +29,5 @@ export function optimizeLightShadow(light: Light, quality: 'high' | 'medium' | '
       break;
     default:
       console.warn('Unknown quality level. Please use "high", "medium", or "low".');
-  }
-
-  if (light.shadow.camera) {
-    (light.shadow.camera as OrthographicCamera).near = 1;
-    (light.shadow.camera as OrthographicCamera).top = 2;
-    (light.shadow.camera as OrthographicCamera).right = 2;
-    (light.shadow.camera as OrthographicCamera).bottom = -2;
-    (light.shadow.camera as OrthographicCamera).left = -2;
-    (light.shadow.camera as OrthographicCamera).far = 10;
   }
 }
