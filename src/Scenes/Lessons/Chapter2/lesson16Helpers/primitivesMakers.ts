@@ -1,11 +1,12 @@
 import { BoxGeometry, Group, Mesh, MeshStandardMaterial, SphereGeometry } from 'three';
 
 const createBush = (scale: number, position: { x: number; y: number; z: number }): Mesh => {
-  const bushGeometry = new SphereGeometry(1, 16, 16);
-  const bushMaterial = new MeshStandardMaterial({ color: 'green' });
+  const bushGeometry = new SphereGeometry(1, 100, 100);
+  const bushMaterial = new MeshStandardMaterial();
   const bush = new Mesh(bushGeometry, bushMaterial);
   bush.scale.set(scale, scale, scale);
   bush.position.set(position.x, position.y, position.z);
+  bush.rotation.x = -0.75;
   return bush;
 };
 
