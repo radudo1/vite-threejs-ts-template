@@ -26,12 +26,12 @@ import {
 } from 'three';
 import gsap from 'gsap';
 
-import { resizeRendererToDisplaySize } from '../../../Helpers/responsiveness';
+import { resizeRendererToDisplaySize } from '../../Helpers/responsiveness';
 import '../../../style.css';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { toggleFullScreen } from '../../../Helpers/fullscreen';
+import { toggleFullScreen } from '../../Helpers/fullscreen';
 import GUI from 'lil-gui';
-import rotationsAngles from '../../../Helpers/rotationAngles';
+import rotationsAngles from '../../Helpers/rotationAngles';
 
 const CANVAS_ID = 'scene';
 

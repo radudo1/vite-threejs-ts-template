@@ -59,7 +59,7 @@ animate();
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
-    canvas = document.querySelector(`canvas#${CANVAS_ID}`);
+    canvas = document.querySelector(`canvas#${CANVAS_ID}`)!;
     renderer = new WebGLRenderer({ canvas: canvas as HTMLCanvasElement, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
