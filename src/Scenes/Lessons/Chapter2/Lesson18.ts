@@ -110,9 +110,9 @@ const generateGalaxy = () => {
       sizeAttenuation: true,
       depthWrite: false,
       blending: AdditiveBlending,
-      map: texture,
+      //map: texture,
       transparent: true,
-      alphaMap: texture,
+      //alphaMap: texture,
       vertexColors: true,
     });
   }
